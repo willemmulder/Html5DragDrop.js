@@ -40,8 +40,9 @@
 					}
 				};
 				options = $.extend(defaultOptions, options);
+				var elements = this;
 
-				this.each(function() {
+				elements.each(function() {
 					var tree = $(this);
 					var draggables = tree.find(options.draggables);
 					var droppables = tree.find(options.droppables);
@@ -49,7 +50,8 @@
 					var currentlyHoveredElement = null;
 					var elementWasDroppedSuccessfully = false;
 
-					var randomEventNamespace = ".jQuery-Treeview-" + new Date().getTime() + "-" + Math.random();
+					var randomEventNamespace = ".jQuery-treeView-" + new Date().getTime() + "-" + Math.random();
+					tree.data("jquery_treeview_randomeventnamespace", randomEventNamespace);
 
 					draggables.each(function() {
 						this.draggable = true;
@@ -121,13 +123,27 @@
 
 				return {
 					stop : function() {
-
+						elements.each(function() {
+							var tree = $(this);
+							var draggables = tree.find(options.draggables);
+							var droppables = tree.find(options.droppables);
+							var randomEventNamespace = tree.data("jquery_treeview_randomeventnamespace");
+							// Unbind all event-listeners
+							draggables.each(function() {
+								this.draggable = false;
+								$(this).off(randomEventNamespace);
+							});
+							droppables.each(function() {
+								$(this).off(randomEventNamespace);
+							});
+						})
+						
 					}
 				}
 			};
 
 			$(function() {
-				$(".container").treeView({
+				var treeView = $(".container").treeView({
 					draggables : "li",
 					droppables : "ul",
 					onDragStart : function(draggedElement) {
@@ -162,11 +178,12 @@
 							opacity: 1
 						});
 					},
-					ghosting : false,
+					ghosting : true,
 					getGhostingContent : function(draggedElement) {
 						return draggedElement;
 					}
 				});
+				treeView.stop();
 			});
 		</script>
 	</head>
