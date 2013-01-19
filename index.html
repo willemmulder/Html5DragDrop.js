@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			.container { }
+		</style>
+		<script src="js/jquery-1.9.0.min.js"></script>
+		<script>
+
+			// treeView allows for live edits to the tree. It will also not alter the HTML, nor styling. You have full control.
+			$.fn.treeView = function(options) {
+				var defaultOptions = {
+					draggables : "li",
+					acceptDraggableFromElsewhere : false,
+					ghosting : true,
+					droppables : "ul",
+					onDragStart : function(draggedElement) {
+
+					},
+					onDragCancelled : function(draggedElement) {
+
+					},
+					onDrop : function(draggedElement, destinationElement) {
+
+					},
+					onDrag : function(draggedElement) {
+
+					}, 
+					onEnter : function(draggedElement, enteredElement) {
+
+					},
+					onDragOver : function(draggedElement, hoveredElement) {
+
+					}, 
+					onLeave : function(draggedElement, leftElement) {
+
+					},
+					getGhostingContent : function(draggedElement) {
+						return draggedElement;
+					}
+				};
+				options = $.extend(defaultOptions, options);
+
+				this.each(function() {
+					var tree = $(this);
+					var draggables = tree.find(options.draggables);
+					var droppables = tree.find(options.droppables);
+					var currentlyDraggedElement = null;
+					var currentlyHoveredElement = null;
+					var elementWasDroppedSuccessfully = false;
+
+					var randomEventNamespace = ".jQuery-Treeview-" + new Date().getTime() + "-" + Math.random();
+
+					draggables.each(function() {
+						this.draggable = true;
+						$(this).on("dragstart"+randomEventNamespace, function(event) {
+							currentlyDraggedElement = $(event.target);
+							options.onDragStart(currentlyDraggedElement);
+							// Set the ghosting image
+							if (!options.ghosting) {
+								event.originalEvent.dataTransfer.setDragImage($("<div/>").get(0), 0, 0);
+							} else {
+								var ghosting = options.getGhostingContent(currentlyDraggedElement);
+								if (ghosting instanceof jQuery) {
+									ghosting = ghosting.get(0);
+								}
+								if (ghosting instanceof Element) {
+									event.originalEvent.dataTransfer.setDragImage(ghosting, 0, 0);
+								}
+							}
+							event.stopPropagation();
+						});
+						$(this).on("drag"+randomEventNamespace, function(event) {
+							options.onDrag(currentlyDraggedElement);
+							event.stopPropagation();
+						});
+						$(this).on("dragend"+randomEventNamespace, function(event) {
+							// Trigger a 'leave' on the currentlyHoveredElement
+							if (currentlyHoveredElement) {
+								options.onLeave(currentlyDraggedElement, currentlyHoveredElement);
+							}
+							// Trigger a cancel or a drop, based on whether the elementWasDroppedSuccessfully
+							if (elementWasDroppedSuccessfully) {
+								options.onDrop(currentlyDraggedElement, currentlyHoveredElement);
+							} else {
+								options.onDragCancelled(currentlyDraggedElement);
+							}
+							// Reset variables
+							currentlyDraggedElement = null;
+							currentlyHoveredElement = null;
+							elementWasDroppedSuccessfully = false;
+							event.preventDefault();
+							event.stopPropagation();
+						});
+					});
+
+					droppables.each(function() {
+						$(this).on("dragover"+randomEventNamespace, function(event) {
+							// .PreventDefault() is a means of saying that we accept the draggable
+							event.preventDefault();
+							currentlyHoveredElement = $(event.target);
+							options.onHover(currentlyDraggedElement, currentlyHoveredElement);
+						});
+						$(this).on("dragenter"+randomEventNamespace, function(event) {
+							// .PreventDefault() is a means of saying that we accept the draggable
+							event.preventDefault();
+							currentlyHoveredElement = $(event.target);
+							options.onEnter(currentlyDraggedElement, currentlyHoveredElement);
+						});
+						$(this).on("dragleave"+randomEventNamespace, function(event) {
+							options.onLeave(currentlyDraggedElement, currentlyHoveredElement);
+							currentlyHoveredElement = null;
+						});
+						$(this).on("drop"+randomEventNamespace, function(event) {
+							elementWasDroppedSuccessfully = true;
+							currentlyHoveredElement = $(event.target);
+							// Actual onDrop event will be thrown at dragEnd
+						});
+					});
+				});
+
+				return {
+					stop : function() {
+
+					}
+				}
+			};
+
+			$(function() {
+				$(".container").treeView({
+					draggables : "li",
+					droppables : "ul",
+					onDragStart : function(draggedElement) {
+						draggedElement.animate({
+							opacity: 0.2
+						});
+					},
+					onDragCancelled : function(draggedElement) {
+						draggedElement.animate({
+							opacity: 1
+						});
+					},
+					onDrop : function(draggedElement, destinationElement) {
+						draggedElement.animate({
+							opacity: 1
+						});
+						destinationElement.append(draggedElement);
+					},
+					onDrag : function(draggedElement) {
+
+					}, 
+					onEnter : function(draggedElement, enteredElement) {
+						enteredElement.animate({
+							opacity: 0.6
+						});
+					},
+					onHover : function(draggedElement, hoveredElement) {
+
+					}, 
+					onLeave : function(draggedElement, leftElement) {
+						leftElement.animate({
+							opacity: 1
+						});
+					},
+					ghosting : false,
+					getGhostingContent : function(draggedElement) {
+						return draggedElement;
+					}
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<div class='container'>
+			<ul class='tree1'>
+				<li class='file1'>hai</li>
+				<li class='folder'>folder
+					<ul>
+						<li class='file2'>file</li>
+					</ul>
+				</li>
+			</ul>
+			<ul class='tree2'>
+				<li class='file1'>hai</li>
+				<li class='folder'>folder
+					<ul>
+						<li class='file2'>file</li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+		<script>
+			// Analytics
+		</script>
+	</body>
+</html>
