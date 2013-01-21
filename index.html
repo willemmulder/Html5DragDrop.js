@@ -23,7 +23,7 @@
 					onDragCancelled : function(draggedElement, details) {
 
 					},
-					onDrop : function(draggedElement, destinationElement, details) {
+					onDrop : function(draggedElement, destinationDroppable, details) {
 
 					},
 					onDrag : function(draggedElement, details) {
@@ -89,14 +89,14 @@
 							// Trigger a 'leave' on the currentlyHoveredElement and currentlyHoveredDroppable
 							if (currentlyHoveredDroppable && currentlyHoveredElement) {
 								options.onLeaveDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
-									mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredElement),
+									mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
 									currentlyHoveredElement : currentlyHoveredElement
 								});
 							}	
 							// Trigger a cancel or a drop, based on whether the elementWasDroppedSuccessfully
 							if (elementWasDroppedSuccessfully) {
 								options.onDrop(currentlyDraggedElement, currentlyHoveredDroppable, { 
-									mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredElement),
+									mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
 									currentlyHoveredElement : currentlyHoveredElement
 								});
 							} else {
@@ -122,7 +122,7 @@
 							currentlyHoveredDroppable = $(event.originalEvent.currentTarget);
 							currentlyHoveredElement = $(event.target);
 							options.onHoverDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
-								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredElement),
+								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
 								currentlyHoveredElement : currentlyHoveredElement
 							});
 						});
@@ -133,7 +133,7 @@
 							currentlyHoveredDroppable = $(event.originalEvent.currentTarget);
 							currentlyHoveredElement = $(event.target);
 							options.onEnterDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
-								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredElement),
+								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
 								currentlyHoveredElement : currentlyHoveredElement
 							});
 						});
@@ -141,7 +141,7 @@
 							event.preventDefault();
 							event.stopPropagation();
 							options.onLeaveDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
-								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredElement),
+								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
 								currentlyHoveredElement : currentlyHoveredElement
 							});
 							currentlyHoveredDroppable = null;
@@ -157,16 +157,15 @@
 						});
 					});
 
-					function getMouseLocation(event, draggable, droppable) {
+					function getMouseLocation(event, draggable, droppable, currentElement) {
 						var mouseLocation = {};
-						currentElement = $(event.target);
 						function delta(pos, within) {
 							return { x: pos.x - within.left, y: pos.y - within.top };
 						}
 						mouseLocation.inDocument = { x: event.originalEvent.clientX, y: event.originalEvent.clientY };
 						mouseLocation.inDraggable = (draggable ? delta(mouseLocation.inDocument, draggable.offset()) : null);
 						mouseLocation.inDroppable = (droppable ? delta(mouseLocation.inDocument, droppable.offset()) : null);
-						mouseLocation.inCurrentElement = delta(mouseLocation.inDocument, currentElement.offset());
+						mouseLocation.inCurrentElement = (currentElement ? delta(mouseLocation.inDocument, currentElement.offset()) : null);
 						return mouseLocation;
 					}
 				});
@@ -195,8 +194,17 @@
 			$(function() {
 
 				function placeAtTarget(elementToPlace, target, details) {
-					console.log(details.mouseLocation);
-					target.append(elementToPlace);
+					if (details.mouseLocation.inCurrentElement.y < target.height() / 3) {
+						// Place before element
+						target.before(elementToPlace);
+					} else if (details.mouseLocation.inCurrentElement.y > target.height() * 2/3) {
+						// Place after element
+						target.after(elementToPlace);
+					} else {
+						// Place 'under'/in element
+						target.append(elementToPlace);
+					}
+					
 				}
 
 				var treeView = $(".container").html5dragdrop({
@@ -214,19 +222,19 @@
 							opacity: 1
 						});
 					},
-					onDrop : function(draggedElement, destinationElement, details) {
+					onDrop : function(draggedElement, destinationDroppable, details) {
 						$(".container").find(".potentialDestination").remove();
 						draggedElement.animate({
 							opacity: 1
 						});
-						placeAtTarget(draggedElement, destinationElement, details);
+						placeAtTarget(draggedElement, details.currentlyHoveredElement, details);
 					},
 					onDrag : function(draggedElement) {
 
 					}, 
 					onEnterDroppable : function(draggedElement,  enteredDroppable, details) {
 						$(".container").find(".potentialDestination").remove();
-						placeAtTarget($("<li class='potentialDestination'>&nbsp</li>"), enteredDroppable, details);
+						placeAtTarget($("<li class='potentialDestination'>&nbsp</li>"), details.currentlyHoveredElement, details);
 					},
 					onHoverDroppable : function(draggedElement, hoveredDroppable, details) {
 
