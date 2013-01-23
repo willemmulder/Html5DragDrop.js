@@ -4,6 +4,7 @@
 		<style>
 			.container { }
 			.potentialDestination { background: #ffff00; }
+			.tree1 { background: #ddd; }
 		</style>
 		<script src="js/jquery-1.9.0.min.js"></script>
 		<script>
@@ -39,6 +40,15 @@
 					onLeaveDroppable : function(draggedElement, leftDroppable, details) {
 
 					},
+					/*
+					// onEnterElementInDroppable on the next element is fired *before* the onLeaveElementInDroppable of the previous elm
+					onEnterElementInDroppable : function(draggedElement,  enteredElement, details) {
+
+					},
+					// onEnterElementInDroppable on the next element is fired *before* the onLeaveElementInDroppable of the previous elm
+					onLeaveElementInDroppable : function(draggedElement,  leftElement, details) {
+
+					},*/
 					getGhostingContent : function(draggedElement, details) {
 						return draggedElement;
 					}
@@ -126,26 +136,37 @@
 								currentlyHoveredElement : currentlyHoveredElement
 							});
 						});
+						// dragenter on the next element is fired *before* the dragleave of the previous element
 						$(this).on("dragenter"+randomEventNamespace, function(event) {
 							// .PreventDefault() is a means of saying that we accept the draggable
 							event.preventDefault();
 							event.stopPropagation();
-							currentlyHoveredDroppable = $(event.originalEvent.currentTarget);
 							currentlyHoveredElement = $(event.target);
-							options.onEnterDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
-								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
-								currentlyHoveredElement : currentlyHoveredElement
-							});
+							// Check if we really entered a new hoveredDroppable. If so, fire an event and set new hoveredDroppable
+							if (!currentlyHoveredElement.closest(droppables).is(currentlyHoveredDroppable)) {
+								currentlyHoveredDroppable = $(event.originalEvent.currentTarget);
+								options.onEnterDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
+									mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
+									currentlyHoveredElement : currentlyHoveredElement
+								});
+							}
 						});
 						$(this).on("dragleave"+randomEventNamespace, function(event) {
 							event.preventDefault();
 							event.stopPropagation();
-							options.onLeaveDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
-								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
-								currentlyHoveredElement : currentlyHoveredElement
-							});
-							currentlyHoveredDroppable = null;
-							currentlyHoveredElement = null;
+							// Check if we really left the hoveredDroppable. If so, fire an event
+							// currentlyHoveredElement cannot be set here, since event.target does NOT contain the currently Hovered Element
+							if (!$(currentlyHoveredElement).closest(options.droppables).is($(this))) {
+								options.onLeaveDroppable(currentlyDraggedElement, $(this), { 
+									mouseLocation: getMouseLocation(event, currentlyDraggedElement, $(this), currentlyHoveredElement),
+									currentlyHoveredElement : currentlyHoveredElement
+								});
+							}
+							// Make the currentlyHoveredDroppable empty if the mouse is now outside a droppable
+							// Do *not* empty the currentlyHoveredDroppable if the mouse is inside a droppable. Indeed, it was in that case set only just a millisecond age in the dragenter event (which is fired before the dragleave) and we should leave it intact
+							if($(event.target).closest(droppables).size() === 0) {
+								currentlyHoveredDroppable = null;
+							}
 						});
 						$(this).on("drop"+randomEventNamespace, function(event) {
 							event.preventDefault();
@@ -209,7 +230,7 @@
 
 				var treeView = $(".container").html5dragdrop({
 					draggables : "li",
-					droppables : "ul, .potentialDestination",
+					droppables : "ul", //, .potentialDestination",
 					live : true, // allow for live changes to the dom
 					onDragStart : function(draggedElement, details) {
 						draggedElement.animate({
@@ -217,13 +238,15 @@
 						});
 					},
 					onDragCancelled : function(draggedElement, details) {
-						$(".container").find(".potentialDestination").remove();
+						console.log("cancelled");
+						$(".container").find(".potentialDestination").hide();
 						draggedElement.animate({
 							opacity: 1
 						});
 					},
 					onDrop : function(draggedElement, destinationDroppable, details) {
-						$(".container").find(".potentialDestination").remove();
+						console.log("dropped");
+						$(".container").find(".potentialDestination").hide();
 						draggedElement.animate({
 							opacity: 1
 						});
@@ -233,14 +256,15 @@
 
 					}, 
 					onEnterDroppable : function(draggedElement,  enteredDroppable, details) {
-						$(".container").find(".potentialDestination").remove();
+						console.log("entered",enteredDroppable);
+						$(".container").find(".potentialDestination").hide();
 						placeAtTarget($("<li class='potentialDestination'>&nbsp</li>"), details.currentlyHoveredElement, details);
 					},
 					onHoverDroppable : function(draggedElement, hoveredDroppable, details) {
 
 					}, 
 					onLeaveDroppable : function(draggedElement, leftDroppable, details) {
-
+						console.log("left", leftDroppable);
 					},
 					ghosting : true,
 					getGhostingContent : function(draggedElement, details) {
@@ -262,12 +286,9 @@
 				</li>
 			</ul>
 			<ul class='tree2'>
-				<li class='file1'>hai</li>
-				<li class='folder'>folder
-					<ul>
-						<li class='file2'>file</li>
-					</ul>
-				</li>
+				<li class='file21'>hai</li>
+				<li class='folder21'>folder</li>
+				<li class='file22'>file 2</li>
 			</ul>
 		</div>
 		<script>
