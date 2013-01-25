@@ -2,286 +2,132 @@
 <html>
 	<head>
 		<style>
-			.container { }
-			.potentialDestination { background: #ffff00; }
-			.tree1 { background: #ddd; }
+
+			body { background: #888; }
+
+			.container { 
+				margin: auto; margin-top: 40px; width: 600px; height: 400px; box-shadow: 0px 0px 10px #333;
+				background: #eee;
+				font: 14px arial, verdana, sans-serif;
+				position: relative;
+			}
+
+			h1 { font-size: 40px; padding: 30px; color: #66d; margin: 0px; }
+			p { background: #44b; padding: 30px; margin: 0px; color: #fff; }
+			
+			ul { margin: 0px; padding: 0px; background: #222; }
+			ul ul { margin-left: 20px; }
+			ul li { 
+				list-style: none; color: #fff; padding: 10px; padding-left: 30px; 
+				background: #161819;
+			}
+
 			*[draggable] { cursor: move; }
 		</style>
 		<script src="js/jquery-1.9.0.min.js"></script>
+		<script src="js/jquery.html5dragdrop.js"></script>
 		<script>
-
-			// HTML5DragDrop allows for live edits to the root (live = true). 
-			// It will also not alter the HTML, nor styling. You have full control.
-			$.fn.html5dragdrop = function(options) {
-				var defaultOptions = {
-					draggables : "li",
-					acceptDraggableFromElsewhere : false,
-					ghosting : true,
-					droppables : "ul",
-					live : true, // TODO
-					onDragStart : function(draggedElement, details) {
-
-					},
-					onDragCancelled : function(draggedElement, details) {
-
-					},
-					onDrop : function(draggedElement, destinationDroppable, details) {
-
-					},
-					onDrag : function(draggedElement, details) {
-
-					}, 
-					// onEnterDroppable on the next droppable is fired *before* the onLeaveDroppable of the previous droppable
-					onEnterDroppable : function(draggedElement,  enteredDroppable, details) {
-
-					},
-					onHoverDroppable : function(draggedElement, hoveredDroppable, details) {
-
-					}, 
-					onLeaveDroppable : function(draggedElement, leftDroppable, details) {
-
-					},
-					/*
-					// onEnterElementInDroppable on the next element is fired *before* the onLeaveElementInDroppable of the previous elm
-					onEnterElementInDroppable : function(draggedElement,  enteredElement, details) {
-
-					},
-					// onEnterElementInDroppable on the next element is fired *before* the onLeaveElementInDroppable of the previous elm
-					onLeaveElementInDroppable : function(draggedElement,  leftElement, details) {
-
-					},*/
-					getGhostingContent : function(draggedElement, details) {
-						return draggedElement;
-					}
-				};
-				options = $.extend(defaultOptions, options);
-				var elements = this;
-
-				elements.each(function() {
-					var root = $(this);
-					var draggables = root.find(options.draggables);
-					var droppables = root.find(options.droppables);
-					var currentlyDraggedElement = null;
-					var currentlyHoveredElement = null;
-					var currentlyHoveredDroppable = null;
-					var elementWasDroppedSuccessfully = false;
-
-					var randomEventNamespace = ".jQuery-html5DragDrop-" + new Date().getTime() + "-" + Math.random();
-					root.data("jquery_html5dragdrop_randomeventnamespace", randomEventNamespace);
-
-					draggables.each(function() {
-						this.draggable = true;
-						$(this).on("dragstart"+randomEventNamespace, function(event) {
-							currentlyDraggedElement = $(event.target);
-							currentlyHoveredElement = $(event.target);
-							options.onDragStart(currentlyDraggedElement, { 
-								mouseLocation: getMouseLocation(event, currentlyDraggedElement, null)
-							});
-							// Set the ghosting image
-							if (!options.ghosting) {
-								event.originalEvent.dataTransfer.setDragImage($("<div/>").get(0), 0, 0);
-							} else {
-								var ghosting = options.getGhostingContent(currentlyDraggedElement);
-								if (ghosting instanceof jQuery) {
-									ghosting = ghosting.get(0);
-								}
-								if (ghosting instanceof Element) {
-									event.originalEvent.dataTransfer.setDragImage(ghosting, 0, 0);
-								}
-							}
-							event.stopPropagation();
-						});
-						$(this).on("drag"+randomEventNamespace, function(event) {
-							options.onDrag(currentlyDraggedElement, { 
-								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
-								currentlyHoveredElement : currentlyHoveredElement
-							});
-							event.stopPropagation();
-						});
-						$(this).on("dragend"+randomEventNamespace, function(event) {
-							// Trigger a 'leave' on the currentlyHoveredElement and currentlyHoveredDroppable
-							if (currentlyHoveredDroppable && currentlyHoveredElement) {
-								options.onLeaveDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
-									mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
-									currentlyHoveredElement : currentlyHoveredElement
-								});
-							}	
-							// Trigger a cancel or a drop, based on whether the elementWasDroppedSuccessfully
-							if (elementWasDroppedSuccessfully) {
-								options.onDrop(currentlyDraggedElement, currentlyHoveredDroppable, { 
-									mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
-									currentlyHoveredElement : currentlyHoveredElement
-								});
-							} else {
-								options.onDragCancelled(currentlyDraggedElement, { 
-									mouseLocation: getMouseLocation(event, currentlyDraggedElement, null)
-								});
-							}
-							// Reset variables
-							currentlyDraggedElement = null;
-							currentlyHoveredDroppable = null;
-							currentlyHoveredElement = null;
-							elementWasDroppedSuccessfully = false;
-							event.preventDefault();
-							event.stopPropagation();
-						});
-					});
-
-					$(document).on("dragenter"+randomEventNamespace, function(event) {
-						// If we get here, the dragenter has not been stopPropagated() by any droppable, 
-						// so we are now *outside* a droppable
-						currentlyHoveredElement = $(event.target);
-						// If currentlyHoveredDroppable is filled, this is the first dragenter event outisde the droppable
-						if(currentlyHoveredDroppable !== null) {
-							currentlyHoveredDroppable = null;
-						}
-					});
-
-					droppables.each(function() {
-						$(this).on("dragover"+randomEventNamespace, function(event) {
-							// .PreventDefault() is a means of saying that we accept the draggable
-							event.preventDefault();
-							event.stopPropagation();
-							currentlyHoveredDroppable = $(event.originalEvent.currentTarget);
-							options.onHoverDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
-								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
-								currentlyHoveredElement : currentlyHoveredElement
-							});
-						});
-						// dragenter on the next element is fired *before* the dragleave of the previous element
-						$(this).on("dragenter"+randomEventNamespace, function(event) {
-							// .PreventDefault() is a means of saying that we accept the draggable
-							event.preventDefault();
-							event.stopPropagation();
-							currentlyHoveredElement = $(event.target);
-							// Check if we really entered a new hoveredDroppable. If so, fire an event and set new hoveredDroppable
-							if (!currentlyHoveredElement.closest(droppables).is(currentlyHoveredDroppable)) {
-								currentlyHoveredDroppable = $(event.originalEvent.currentTarget);
-								options.onEnterDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
-									mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
-									currentlyHoveredElement : currentlyHoveredElement
-								});
-							}
-						});
-						$(this).on("dragleave"+randomEventNamespace, function(event) {
-							event.preventDefault();
-							event.stopPropagation();
-							// Check if we really left the hoveredDroppable. If so, fire an event
-							// currentlyHoveredElement cannot be set here, since event.target does NOT contain the currently Hovered Element
-							if (!$(currentlyHoveredElement).closest(options.droppables).is($(this))) {
-								options.onLeaveDroppable(currentlyDraggedElement, $(this), { 
-									mouseLocation: getMouseLocation(event, currentlyDraggedElement, $(this), currentlyHoveredElement),
-									currentlyHoveredElement : currentlyHoveredElement
-								});
-							}
-						});
-						$(this).on("drop"+randomEventNamespace, function(event) {
-							event.preventDefault();
-							event.stopPropagation();
-							elementWasDroppedSuccessfully = true;
-							currentlyHoveredDroppable = $(event.originalEvent.currentTarget);
-							currentlyHoveredElement = $(event.target);
-							// Actual onDrop event will be thrown at dragEnd
-						});
-					});
-
-					function getMouseLocation(event, draggable, droppable, currentElement) {
-						var mouseLocation = {};
-						function delta(pos, within) {
-							return { x: pos.x - within.left, y: pos.y - within.top };
-						}
-						mouseLocation.inDocument = { x: event.originalEvent.clientX, y: event.originalEvent.clientY };
-						mouseLocation.inDraggable = (draggable ? delta(mouseLocation.inDocument, draggable.offset()) : null);
-						mouseLocation.inDroppable = (droppable ? delta(mouseLocation.inDocument, droppable.offset()) : null);
-						mouseLocation.inCurrentElement = (currentElement ? delta(mouseLocation.inDocument, currentElement.offset()) : null);
-						return mouseLocation;
-					}
-				});
-
-				return {
-					stop : function() {
-						elements.each(function() {
-							var tree = $(this);
-							var draggables = tree.find(options.draggables);
-							var droppables = tree.find(options.droppables);
-							var randomEventNamespace = tree.data("jquery_html5dragdrop_randomeventnamespace");
-							// Unbind all event-listeners
-							draggables.each(function() {
-								this.draggable = false;
-								$(this).off(randomEventNamespace);
-							});
-							droppables.each(function() {
-								$(this).off(randomEventNamespace);
-							});
-						})
-						
-					}
-				}
-			};
 
 			$(function() {
 
-				function placeAtTarget(elementToPlace, target, details) {
-					if (details.mouseLocation.inCurrentElement.y < target.height() / 3) {
-						// Place before element
-						target.before(elementToPlace);
-					} else if (details.mouseLocation.inCurrentElement.y > target.height() * 2/3) {
-						// Place after element
-						target.after(elementToPlace);
-					} else {
-						// Place 'under'/in element
-						target.append(elementToPlace);
-					}
-					
-				}
-
-				var treeView = $(".container").html5dragdrop({
+				// List
+				var list = $(".container .list").html5dragdrop({
 					draggables : "li",
-					droppables : "ul", //, .potentialDestination",
-					live : true, // allow for live changes to the dom
+					droppables : "ul, li",
 					onDragStart : function(draggedElement, details) {
 						draggedElement.animate({
 							opacity: 0.2
 						});
 					},
 					onDragCancelled : function(draggedElement, details) {
-						$(".container").find(".potentialDestination").hide();
 						draggedElement.animate({
 							opacity: 1
 						});
 					},
 					onDrop : function(draggedElement, destinationDroppable, details) {
-						$(".container").find(".potentialDestination").hide();
+						draggedElement.animate({
+							opacity: 1
+						});
+						placeAtList(draggedElement, details.currentlyHoveredElement, details);
+					},
+					onHoverDroppable : function(draggedElement,  hoveredDroppable, details) {
+						placeAtList(draggedElement, details.currentlyHoveredElement, details);
+					}
+				});
+				function placeAtList(elementToPlace, target, details) {
+					if (details.mouseLocation.inCurrentElement.y < target.height() / 2) {
+						// Place before element
+						target.before(elementToPlace);
+					} else if (details.mouseLocation.inCurrentElement.y > target.height() * 3/4) {
+						// Place after element
+						target.after(elementToPlace);
+					}
+					list.update();
+				}
+
+
+				// Tree
+				var treeView = $(".container tree").html5dragdrop({
+					draggables : "li",
+					droppables : "ul, li",
+					onDragStart : function(draggedElement, details) {
+						draggedElement.animate({
+							opacity: 0.2
+						});
+					},
+					onDragCancelled : function(draggedElement, details) {
+						$(".container").find(".potentialDestination").remove();
+						draggedElement.animate({
+							opacity: 1
+						});
+					},
+					onDrop : function(draggedElement, destinationDroppable, details) {
 						draggedElement.animate({
 							opacity: 1
 						});
 						placeAtTarget(draggedElement, details.currentlyHoveredElement, details);
-					},
-					onDrag : function(draggedElement, details) {
-						
-					}, 
-					onEnterDroppable : function(draggedElement,  enteredDroppable, details) {
-						
+						$(".container").find(".potentialDestination").remove();
 					},
 					onHoverDroppable : function(draggedElement, hoveredDroppable, details) {
-						$(".container").find(".potentialDestination").hide();
+						// Don't do anything if we are currently hovering the .potentialDestination
+						if (hoveredDroppable.is(treeView.getRoot().find(".potentialDestination"))) {
+							return;
+						}
+						$(".container").find(".potentialDestination").remove();
 						placeAtTarget($("<li class='potentialDestination'>&nbsp</li>"), details.currentlyHoveredElement, details);
-					}, 
-					onLeaveDroppable : function(draggedElement, leftDroppable, details) {
-						
-					},
-					ghosting : true,
-					getGhostingContent : function(draggedElement, details) {
-						return draggedElement;
 					}
 				});
-				//treeView.stop();
+				function placeAtTarget(elementToPlace, target, details) {
+					if (details.mouseLocation.inCurrentElement.y < target.height() * 1/4) {
+						// Place before element
+						target.before(elementToPlace);
+					} else if (details.mouseLocation.inCurrentElement.y > target.height() * 3/4) {
+						// Place after element
+						target.after(elementToPlace);
+					} else {
+						// Place 'under'/in element
+						var c = $("<ul>");
+						target.append(c);
+						c.append(elementToPlace);
+					}
+					treeView.update();
+				}
+
 			});
 		</script>
 	</head>
 	<body>
 		<div class='container'>
-			<ul class='tree1'>
+			<h1>HTML5 Drag&Drop</h1>
+			<p>The simplest example would be a list</p>
+			<ul class='list'>
+				<li>item 1</li>
+				<li>item 2</li>
+				<li>item 3</li>
+				<li>item 4</li>
+			</ul>
+			<p>But a tree is also easy</p>
+			<ul class='tree'>
 				<li class='file1'>hai</li>
 				<li class='folder'>folder
 					<ul>
@@ -289,11 +135,7 @@
 					</ul>
 				</li>
 			</ul>
-			<ul class='tree2'>
-				<li class='file21'>hai</li>
-				<li class='folder21'>folder</li>
-				<li class='file22'>file 2</li>
-			</ul>
+			<button onclick='$(".tree1").append("<li>added</li>"); $(".container").html5dragdrop().update();'>Add tree element</button>
 		</div>
 		<script>
 			// Analytics
