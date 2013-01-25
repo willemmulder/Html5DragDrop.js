@@ -5,6 +5,7 @@
 			.container { }
 			.potentialDestination { background: #ffff00; }
 			.tree1 { background: #ddd; }
+			*[draggable] { cursor: move; }
 		</style>
 		<script src="js/jquery-1.9.0.min.js"></script>
 		<script>
@@ -72,6 +73,7 @@
 						this.draggable = true;
 						$(this).on("dragstart"+randomEventNamespace, function(event) {
 							currentlyDraggedElement = $(event.target);
+							currentlyHoveredElement = $(event.target);
 							options.onDragStart(currentlyDraggedElement, { 
 								mouseLocation: getMouseLocation(event, currentlyDraggedElement, null)
 							});
@@ -91,7 +93,8 @@
 						});
 						$(this).on("drag"+randomEventNamespace, function(event) {
 							options.onDrag(currentlyDraggedElement, { 
-								mouseLocation: getMouseLocation(event, currentlyDraggedElement, null)
+								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
+								currentlyHoveredElement : currentlyHoveredElement
 							});
 							event.stopPropagation();
 						});
@@ -254,15 +257,15 @@
 						});
 						placeAtTarget(draggedElement, details.currentlyHoveredElement, details);
 					},
-					onDrag : function(draggedElement) {
-
+					onDrag : function(draggedElement, details) {
+						
 					}, 
 					onEnterDroppable : function(draggedElement,  enteredDroppable, details) {
-						$(".container").find(".potentialDestination").hide();
-						placeAtTarget($("<li class='potentialDestination'>&nbsp</li>"), details.currentlyHoveredElement, details);
+						
 					},
 					onHoverDroppable : function(draggedElement, hoveredDroppable, details) {
-
+						$(".container").find(".potentialDestination").hide();
+						placeAtTarget($("<li class='potentialDestination'>&nbsp</li>"), details.currentlyHoveredElement, details);
 					}, 
 					onLeaveDroppable : function(draggedElement, leftDroppable, details) {
 						
