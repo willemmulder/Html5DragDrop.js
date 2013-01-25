@@ -124,13 +124,22 @@
 						});
 					});
 
+					$(document).on("dragenter"+randomEventNamespace, function(event) {
+						// If we get here, the dragenter has not been stopPropagated() by any droppable, 
+						// so we are now *outside* a droppable
+						currentlyHoveredElement = $(event.target);
+						// If currentlyHoveredDroppable is filled, this is the first dragenter event outisde the droppable
+						if(currentlyHoveredDroppable !== null) {
+							currentlyHoveredDroppable = null;
+						}
+					});
+
 					droppables.each(function() {
 						$(this).on("dragover"+randomEventNamespace, function(event) {
 							// .PreventDefault() is a means of saying that we accept the draggable
 							event.preventDefault();
 							event.stopPropagation();
 							currentlyHoveredDroppable = $(event.originalEvent.currentTarget);
-							currentlyHoveredElement = $(event.target);
 							options.onHoverDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
 								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
 								currentlyHoveredElement : currentlyHoveredElement
@@ -161,11 +170,6 @@
 									mouseLocation: getMouseLocation(event, currentlyDraggedElement, $(this), currentlyHoveredElement),
 									currentlyHoveredElement : currentlyHoveredElement
 								});
-							}
-							// Make the currentlyHoveredDroppable empty if the mouse is now outside a droppable
-							// Do *not* empty the currentlyHoveredDroppable if the mouse is inside a droppable. Indeed, it was in that case set only just a millisecond age in the dragenter event (which is fired before the dragleave) and we should leave it intact
-							if($(event.target).closest(droppables).size() === 0) {
-								currentlyHoveredDroppable = null;
 							}
 						});
 						$(this).on("drop"+randomEventNamespace, function(event) {
@@ -238,14 +242,12 @@
 						});
 					},
 					onDragCancelled : function(draggedElement, details) {
-						console.log("cancelled");
 						$(".container").find(".potentialDestination").hide();
 						draggedElement.animate({
 							opacity: 1
 						});
 					},
 					onDrop : function(draggedElement, destinationDroppable, details) {
-						console.log("dropped");
 						$(".container").find(".potentialDestination").hide();
 						draggedElement.animate({
 							opacity: 1
@@ -256,7 +258,6 @@
 
 					}, 
 					onEnterDroppable : function(draggedElement,  enteredDroppable, details) {
-						console.log("entered",enteredDroppable);
 						$(".container").find(".potentialDestination").hide();
 						placeAtTarget($("<li class='potentialDestination'>&nbsp</li>"), details.currentlyHoveredElement, details);
 					},
@@ -264,7 +265,7 @@
 
 					}, 
 					onLeaveDroppable : function(draggedElement, leftDroppable, details) {
-						console.log("left", leftDroppable);
+						
 					},
 					ghosting : true,
 					getGhostingContent : function(draggedElement, details) {
