@@ -6,20 +6,37 @@
 			body { background: #888; }
 
 			.container { 
-				margin: auto; margin-top: 40px; width: 600px; height: 400px; box-shadow: 0px 0px 10px #333;
+				margin: auto; margin-top: 40px; width: 600px; box-shadow: 0px 0px 10px #333;
 				background: #eee;
 				font: 14px arial, verdana, sans-serif;
 				position: relative;
 			}
 
-			h1 { font-size: 40px; padding: 30px; color: #66d; margin: 0px; }
+			h1 { font-size: 40px; padding: 30px; color: #44b; margin: 0px; }
 			p { background: #44b; padding: 30px; margin: 0px; color: #fff; }
+
+			.depth { position: relative; }
+			.depth:before, .depth:after {
+			    content: attr(title);
+			    padding: 30px;
+			    color: rgba(255,255,255,.1);
+			    position: absolute;
+			}
+			.depth:before { top: 1px; left: 1px }
+			.depth:after  { top: 2px; left: 2px }
 			
 			ul { margin: 0px; padding: 0px; background: #222; }
 			ul ul { margin-left: 20px; }
 			ul li { 
 				list-style: none; color: #fff; padding: 10px; padding-left: 30px; 
 				background: #161819;
+			}
+
+			button { 
+				color: #fff; 
+				padding: 10px;
+				margin: 20px;
+				background: #44b; 
 			}
 
 			*[draggable] { cursor: move; }
@@ -33,7 +50,7 @@
 				// List
 				var list = $(".container .list").html5dragdrop({
 					draggables : "li",
-					droppables : "ul, li",
+					droppables : "li",
 					onDragStart : function(draggedElement, details) {
 						draggedElement.animate({
 							opacity: 0.2
@@ -55,10 +72,10 @@
 					}
 				});
 				function placeAtList(elementToPlace, target, details) {
-					if (details.mouseLocation.inCurrentElement.y < target.height() / 2) {
+					if (details.mouseLocation.inCurrentElement.y < target.outerHeight(true) / 2) {
 						// Place before element
 						target.before(elementToPlace);
-					} else if (details.mouseLocation.inCurrentElement.y > target.height() * 3/4) {
+					} else {
 						// Place after element
 						target.after(elementToPlace);
 					}
@@ -67,16 +84,16 @@
 
 
 				// Tree
-				var treeView = $(".container tree").html5dragdrop({
+				var treeView = $(".container .tree").html5dragdrop({
 					draggables : "li",
-					droppables : "ul, li",
+					droppables : "li",
 					onDragStart : function(draggedElement, details) {
 						draggedElement.animate({
 							opacity: 0.2
 						});
 					},
 					onDragCancelled : function(draggedElement, details) {
-						$(".container").find(".potentialDestination").remove();
+						$(".container").find(".temporary").remove();
 						draggedElement.animate({
 							opacity: 1
 						});
@@ -85,28 +102,32 @@
 						draggedElement.animate({
 							opacity: 1
 						});
-						placeAtTarget(draggedElement, details.currentlyHoveredElement, details);
-						$(".container").find(".potentialDestination").remove();
+						placeAtTarget(draggedElement, destinationDroppable, details, true);
+						$(".container").find(".temporary").remove();
 					},
 					onHoverDroppable : function(draggedElement, hoveredDroppable, details) {
-						// Don't do anything if we are currently hovering the .potentialDestination
-						if (hoveredDroppable.is(treeView.getRoot().find(".potentialDestination"))) {
+						// Don't do anything if we are currently hovering the draggable
+						if (hoveredDroppable.is(draggedElement)) {
 							return;
 						}
-						$(".container").find(".potentialDestination").remove();
-						placeAtTarget($("<li class='potentialDestination'>&nbsp</li>"), details.currentlyHoveredElement, details);
+						$(".container").find(".temporary").remove();
+						placeAtTarget(draggedElement, hoveredDroppable, details, false);
 					}
 				});
-				function placeAtTarget(elementToPlace, target, details) {
-					if (details.mouseLocation.inCurrentElement.y < target.height() * 1/4) {
+				function placeAtTarget(elementToPlace, target, details, dropped) {
+					if (details.mouseLocation.inCurrentElement.y < target.outerHeight(true) * 1/4) {
 						// Place before element
 						target.before(elementToPlace);
-					} else if (details.mouseLocation.inCurrentElement.y > target.height() * 3/4) {
+					} else if (details.mouseLocation.inCurrentElement.y > target.outerHeight(true) * 3/4) {
 						// Place after element
 						target.after(elementToPlace);
 					} else {
 						// Place 'under'/in element
-						var c = $("<ul>");
+						if (dropped) {
+							var c = $("<ul>");
+						} else {
+							var c = $("<ul class='temporary'>");
+						}
 						target.append(c);
 						c.append(elementToPlace);
 					}
@@ -118,7 +139,7 @@
 	</head>
 	<body>
 		<div class='container'>
-			<h1>HTML5 Drag&Drop</h1>
+			<h1 class='depth' title='HTML5 Drag&amp;Drop'>HTML5 Drag&amp;Drop</h1>
 			<p>The simplest example would be a list</p>
 			<ul class='list'>
 				<li>item 1</li>
@@ -135,7 +156,7 @@
 					</ul>
 				</li>
 			</ul>
-			<button onclick='$(".tree1").append("<li>added</li>"); $(".container").html5dragdrop().update();'>Add tree element</button>
+			<button onclick='$(".tree").append("<li>added</li>"); $(".container .tree").html5dragdrop().update();'>Add tree element</button>
 		</div>
 		<script>
 			// Analytics

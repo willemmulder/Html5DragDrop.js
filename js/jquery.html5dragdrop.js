@@ -205,7 +205,7 @@ $.fn.html5dragdrop = function(options) {
 			function delta(pos, within) {
 				return { x: pos.x - within.left, y: pos.y - within.top };
 			}
-			mouseLocation.inDocument = { x: event.originalEvent.clientX, y: event.originalEvent.clientY };
+			mouseLocation.inDocument = { x: event.originalEvent.pageX, y: event.originalEvent.pageY };
 			mouseLocation.inDraggable = (draggable ? delta(mouseLocation.inDocument, draggable.offset()) : null);
 			mouseLocation.inDroppable = (droppable ? delta(mouseLocation.inDocument, droppable.offset()) : null);
 			mouseLocation.inCurrentElement = (currentElement ? delta(mouseLocation.inDocument, currentElement.offset()) : null);
