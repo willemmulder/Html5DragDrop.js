@@ -106,6 +106,8 @@ $.fn.html5dragdrop = function(options) {
 							event.originalEvent.dataTransfer.setDragImage(ghosting, 0, 0);
 						}
 					}
+					event.originalEvent.dataTransfer.dropEffect = "move";
+					event.originalEvent.dataTransfer.setData("jquery-html5dragdrop", currentlyDraggedElement);
 					event.stopPropagation();
 				});
 				$(this).on("drag"+randomEventNamespace, function(event) {
