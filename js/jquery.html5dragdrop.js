@@ -13,7 +13,7 @@ $.fn.html5dragdrop = function(options) {
 
 	var defaultOptions = {
 		draggables : "li",
-		acceptDraggablesFromOutsideElement : false,
+		acceptDraggablesFromOtherInstances : false,
 		acceptDraggablesFromOutsidePage : false,
 		ghosting : true,
 		droppables : "ul",
@@ -129,7 +129,7 @@ $.fn.html5dragdrop = function(options) {
 				});
 				$(this).on("dragend"+randomEventNamespace, function(event) {
 					// Is the dropzone elsewhere?
-					if (!currentlyHoveredDroppable && options.acceptDraggablesFromOutsideElement) {
+					if (!currentlyHoveredDroppable && options.acceptDraggablesFromOtherInstances) {
 						currentlyHoveredDroppable = window.html5dragdrop.currentlyHoveredDroppable;
 						isCurrentlyDraggedElementDroppedElsewhere = true;
 					}
@@ -182,9 +182,9 @@ $.fn.html5dragdrop = function(options) {
 					// .PreventDefault() is a means of saying that we accept the draggable
 					event.preventDefault();
 					event.stopPropagation();
-					if (currentlyDraggedElement || (options.acceptDraggablesFromOutsideElement && window.html5dragdrop.currentlyDraggedElement)) {
+					if (currentlyDraggedElement || (options.acceptDraggablesFromOtherInstances && window.html5dragdrop.currentlyDraggedElement)) {
 						// Get currentlyDraggedElement from window if we are dragging from one instance to another
-						if (!currentlyDraggedElement && options.acceptDraggablesFromOutsideElement) {
+						if (!currentlyDraggedElement && options.acceptDraggablesFromOtherInstances) {
 							currentlyDraggedElement =  window.html5dragdrop.currentlyDraggedElement; // event.originalEvent.dataTransfer.getData("jquery-html5dragdrop");
 							isCurrentlyDraggedElementFromElsewhere = true;
 						}
@@ -202,6 +202,9 @@ $.fn.html5dragdrop = function(options) {
 							isCurrentlyDraggedElementFromElsewhere = false;
 							currentlyDraggedElement = null;
 						}
+					} else {
+						// Element is dragged from a non-html5dragdrop instance
+						
 					}
 				});
 				// dragenter on a new element is always fired *before* the dragover on that element
@@ -212,7 +215,7 @@ $.fn.html5dragdrop = function(options) {
 					event.preventDefault();
 					event.stopPropagation();
 					// Get currentlyDraggedElement from window if we are dragging from one instance to another
-					if (!currentlyDraggedElement && options.acceptDraggablesFromOutsideElement && window.html5dragdrop.currentlyDraggedElement) {
+					if (!currentlyDraggedElement && options.acceptDraggablesFromOtherInstances && window.html5dragdrop.currentlyDraggedElement) {
 						currentlyDraggedElement =  window.html5dragdrop.currentlyDraggedElement; // event.originalEvent.dataTransfer.getData("jquery-html5dragdrop");
 						isCurrentlyDraggedElementFromElsewhere = true;
 					}
@@ -236,7 +239,7 @@ $.fn.html5dragdrop = function(options) {
 					event.preventDefault();
 					event.stopPropagation();
 					// Get currentlyDraggedElement from window if we are dragging from one instance to another
-					if (!currentlyDraggedElement && options.acceptDraggablesFromOutsideElement && window.html5dragdrop.currentlyDraggedElement) {
+					if (!currentlyDraggedElement && options.acceptDraggablesFromOtherInstances && window.html5dragdrop.currentlyDraggedElement) {
 						currentlyDraggedElement =  window.html5dragdrop.currentlyDraggedElement; // event.originalEvent.dataTransfer.getData("jquery-html5dragdrop");
 						isCurrentlyDraggedElementFromElsewhere = true;
 					}
