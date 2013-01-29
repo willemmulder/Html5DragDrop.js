@@ -152,7 +152,8 @@
 				var list = $(".container .list_left, .container .list_right").html5dragdrop({
 					draggables : "li",
 					droppables : "li",
-					acceptDraggablesFromElsewhere : true, // Accept from elsewhere
+					acceptDraggablesFromOutsidePage : true, // Accept from outside page
+					acceptDraggablesFromOutsideElement : true,
 					onDragStart : function(draggedElement, details) {
 						draggedElement.animate({
 							opacity: 0.2
