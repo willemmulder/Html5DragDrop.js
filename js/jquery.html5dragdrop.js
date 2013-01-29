@@ -15,6 +15,7 @@ $.fn.html5dragdrop = function(options) {
 		draggables : "li",
 		acceptDraggablesFromOtherInstances : false, // Accept from other jqueryhtml5dragdrop
 		acceptDraggablesFromNonInstances : false, // Accept from non-jqueryhtml5dragdrop instances
+		acceptableMimeTypesFromNonInstances : ["text/html"],
 		ghosting : true,
 		droppables : "ul",
 		onDragStart : function(draggedElement, details) {
@@ -211,7 +212,7 @@ $.fn.html5dragdrop = function(options) {
 									isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
 									isCurrentlyDraggedElementFromElsewhere : isCurrentlyDraggedElementFromElsewhere,
 									isFile : (!!event.originalEvent.dataTransfer.files.length),
-									data : (event.originalEvent.dataTransfer.getData("text/html"))
+									data : getData(event.originalEvent.dataTransfer)
 								});
 							}
 						}
@@ -257,7 +258,7 @@ $.fn.html5dragdrop = function(options) {
 									isCurrentlyDraggedElementFromElsewhere : isCurrentlyDraggedElementFromElsewhere,
 									isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
 									isFile : (!!event.originalEvent.dataTransfer.files.length),
-									data : (event.originalEvent.dataTransfer.getData("text/html"))
+									data : getData(event.originalEvent.dataTransfer)
 								});
 							}
 						}
@@ -296,7 +297,7 @@ $.fn.html5dragdrop = function(options) {
 								isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
 								isCurrentlyDraggedElementFromElsewhere : isCurrentlyDraggedElementFromElsewhere,
 								isFile : (!!event.originalEvent.dataTransfer.files.length),
-								data : (event.originalEvent.dataTransfer.getData(""))
+								data : getData(event.originalEvent.dataTransfer)
 							});
 						}
 					}
@@ -309,7 +310,7 @@ $.fn.html5dragdrop = function(options) {
 					currentlyHoveredElement = window.currentlyHoveredElement = $(event.target);
 					// Actual onDrop event will be thrown at dragEnd
 					// Only if the dragging is not taking place within this instance, we deal with it here, since no dragEnd will be fired
-					if (!currentlyDraggedElement) {
+					if (!currentlyDraggedElement && options.acceptDraggablesFromNonInstances && !window.html5dragdrop.currentlyDraggedElement) {
 						// Trigger a 'leave' on the currentlyHoveredElement and currentlyHoveredDroppable
 						options.onLeaveDroppable(null, currentlyHoveredDroppable, { 
 							mouseLocation: getMouseLocation(event, null, currentlyHoveredDroppable, currentlyHoveredElement),
@@ -317,7 +318,7 @@ $.fn.html5dragdrop = function(options) {
 							isCurrentlyDraggedElementDroppedElsewhere : false,
 							isCurrentlyDraggedElementFromElsewhere : true,
 							isFile : (!!event.originalEvent.dataTransfer.files.length),
-							data : (event.originalEvent.dataTransfer.getData("text/html"))
+							data : getData(event.originalEvent.dataTransfer)
 						});
 						// Trigger onDrop
 						options.onDrop(null, currentlyHoveredDroppable, { 
@@ -326,7 +327,7 @@ $.fn.html5dragdrop = function(options) {
 							isCurrentlyDraggedElementDroppedElsewhere : false,
 							isCurrentlyDraggedElementFromElsewhere : true,
 							isFile : (!!event.originalEvent.dataTransfer.files.length),
-							data : (event.originalEvent.dataTransfer.getData("text/html"))
+							data : getData(event.originalEvent.dataTransfer)
 						});
 						// Reset global variables
 						window.html5dragdrop.currentlyHoveredDroppable = null;
@@ -354,6 +355,19 @@ $.fn.html5dragdrop = function(options) {
 			mouseLocation.inDroppable = (droppable ? delta(mouseLocation.inDocument, droppable.offset()) : null);
 			mouseLocation.inCurrentElement = (currentElement ? delta(mouseLocation.inDocument, currentElement.offset()) : null);
 			return mouseLocation;
+		}
+
+		function getData(dataTransfer) {
+			var data;
+			if (dataTransfer.files.length) {
+				return dataTransfer.files;
+			}
+			for(var i = 0, length = options.acceptableMimeTypesFromNonInstances.length; i < length; i++) {
+				data = dataTransfer.getData(options.acceptableMimeTypesFromNonInstances[i]);
+				if (data) {
+					return dataTransfer.getData("text/html");
+				}
+			}
 		}
 
 		function unRegisterDraggables(draggablesToUnregister) {

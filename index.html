@@ -189,29 +189,24 @@
 					droppables : "li",
 					acceptDraggablesFromNonInstances : true, // Accept from non jqueryhtml5dragdrop instances
 					onDrop : function(draggedElement, destinationDroppable, details) {
-						placeAtFileList($("<li>").html("dropped!"), details.currentlyHoveredElement, details);
+						var $li = $("<li>").html("dropped!");
+						placeAtFileList($li, details.currentlyHoveredElement, details);
 						$(".container .filelist .temporary").remove();
+						$li.html("isfile " + details.isFile + ", and data is " + details.data);
+						console.log(details.data);
 					},
 					onHoverDroppable : function(draggedElement, hoveredDroppable, details) {
-						console.log(hoveredDroppable[0]);
 						if (hoveredDroppable.is($("li.temporary"))) {
 							return;
-						}
-						if (draggedElement != null) {
-							console.log("I only want draggables from non-instances!");
 						}
 						$(".container .filelist .temporary").remove();
 						placeAtFileList($("<li class='temporary'>").html("drop here").css("opacity", 0.2), details.currentlyHoveredElement, details);
 					},
 					onEnterDroppable : function(draggedElement, enteredDroppable, details) {
-						if (draggedElement != null) {
-							console.log("I only want draggables from non-instances!");
-						}
+
 					},
 					onLeaveDroppable : function(draggedElement, leftDroppable, details) {
-						if (draggedElement != null) {
-							console.log("I only want draggables from non-instances!");
-						}
+
 					}
 				});
 				function placeAtFileList(elementToPlace, target, details) {
