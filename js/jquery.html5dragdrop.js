@@ -1,3 +1,8 @@
+window.html5dragdrop = {
+	currentlyDraggedElement : null,
+	currentlyHoveredDroppable : null,
+	currentlyHoveredElement : null
+};
 // HTML5DragDrop will not add HTML tags, nor styling. You have full control.
 $.fn.html5dragdrop = function(options) {
 
@@ -8,7 +13,7 @@ $.fn.html5dragdrop = function(options) {
 
 	var defaultOptions = {
 		draggables : "li",
-		acceptDraggableFromElsewhere : false,
+		acceptDraggablesFromElsewhere : false,
 		ghosting : true,
 		droppables : "ul",
 		onDragStart : function(draggedElement, details) {
@@ -60,8 +65,10 @@ $.fn.html5dragdrop = function(options) {
 		var draggables = root.find(options.draggables);
 		var droppables = root.find(options.droppables);
 		var currentlyDraggedElement = null;
+		var isCurrentlyDraggedElementFromElsewhere = false;
 		var currentlyHoveredElement = null;
 		var currentlyHoveredDroppable = null;
+		var isCurrentlyDraggedElementDroppedElsewhere = false;
 		var elementWasDroppedSuccessfully = false;
 
 		// --- Create event nameSpace
@@ -73,7 +80,7 @@ $.fn.html5dragdrop = function(options) {
 		$(document).on("dragenter"+randomEventNamespace, function(event) {
 			// If we get here, the dragenter has not been stopPropagated() by any droppable, 
 			// so we are now *outside* a droppable
-			currentlyHoveredElement = $(event.target);
+			currentlyHoveredElement = window.html5dragdrop.currentlyHoveredElement = $(event.target);
 			// If currentlyHoveredDroppable is filled, this is the first dragenter event outisde the droppable
 			if(currentlyHoveredDroppable !== null) {
 				currentlyHoveredDroppable = null;
@@ -89,8 +96,8 @@ $.fn.html5dragdrop = function(options) {
 			draggablesToInit.each(function() {
 				this.draggable = true;
 				$(this).on("dragstart"+randomEventNamespace, function(event) {
-					currentlyDraggedElement = $(event.target);
-					currentlyHoveredElement = $(event.target);
+					currentlyDraggedElement = window.html5dragdrop.currentlyDraggedElement = $(event.target);
+					currentlyHoveredElement = window.html5dragdrop.currentlyHoveredElement = $(event.target);
 					options.onDragStart(currentlyDraggedElement, { 
 						mouseLocation: getMouseLocation(event, currentlyDraggedElement, null)
 					});
@@ -120,28 +127,46 @@ $.fn.html5dragdrop = function(options) {
 					event.stopPropagation();
 				});
 				$(this).on("dragend"+randomEventNamespace, function(event) {
+					// Is the dropzone elsewhere?
+					if (!currentlyHoveredDroppable && options.acceptDraggablesFromElsewhere) {
+						currentlyHoveredDroppable = window.html5dragdrop.currentlyHoveredDroppable;
+						isCurrentlyDraggedElementDroppedElsewhere = true;
+					}
 					// Trigger a 'leave' on the currentlyHoveredElement and currentlyHoveredDroppable
 					if (currentlyHoveredDroppable && currentlyHoveredElement) {
 						options.onLeaveDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
 							mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
-							currentlyHoveredElement : currentlyHoveredElement
+							currentlyHoveredElement : currentlyHoveredElement,
+							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
+							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere
 						});
 					}	
 					// Trigger a cancel or a drop, based on whether the elementWasDroppedSuccessfully
 					if (elementWasDroppedSuccessfully) {
 						options.onDrop(currentlyDraggedElement, currentlyHoveredDroppable, { 
 							mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
-							currentlyHoveredElement : currentlyHoveredElement
+							currentlyHoveredElement : currentlyHoveredElement,
+							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
+							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere
 						});
 					} else {
 						options.onDragCancelled(currentlyDraggedElement, { 
-							mouseLocation: getMouseLocation(event, currentlyDraggedElement, null)
+							mouseLocation: getMouseLocation(event, currentlyDraggedElement, null),
+							currentlyHoveredElement : currentlyHoveredElement,
+							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
+							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere
 						});
 					}
-					// Reset variables
+					// Reset global variables
+					window.html5dragdrop.currentlyHoveredInstance = null;
+					window.html5dragdrop.currentlyDraggedFromInstance = null;
+					window.html5dragdrop.currentlyDraggedElement = null;
+					// Reset 'local' variables
 					currentlyDraggedElement = null;
+					isCurrentlyDraggedElementFromElsewhere = false;
 					currentlyHoveredDroppable = null;
 					currentlyHoveredElement = null;
+					isCurrentlyDraggedElementDroppedElsewhere = false;
 					elementWasDroppedSuccessfully = false;
 					event.preventDefault();
 					event.stopPropagation();
@@ -156,47 +181,86 @@ $.fn.html5dragdrop = function(options) {
 					// .PreventDefault() is a means of saying that we accept the draggable
 					event.preventDefault();
 					event.stopPropagation();
-					currentlyHoveredDroppable = $(event.originalEvent.currentTarget);
-					if (options.onHoverDroppable) {
-						options.onHoverDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
-							mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
-							currentlyHoveredElement : currentlyHoveredElement
-						});
+					if (currentlyDraggedElement || (options.acceptDraggablesFromElsewhere && window.html5dragdrop.currentlyDraggedElement)) {
+						// Get currentlyDraggedElement from window if we are dragging from one instance to another
+						if (!currentlyDraggedElement && options.acceptDraggablesFromElsewhere) {
+							currentlyDraggedElement =  window.html5dragdrop.currentlyDraggedElement; // event.originalEvent.dataTransfer.getData("jquery-html5dragdrop");
+							isCurrentlyDraggedElementFromElsewhere = true;
+						}
+						currentlyHoveredDroppable = window.currentlyHoveredDroppable = $(this);
+						if (options.onHoverDroppable) {
+							options.onHoverDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
+								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
+								currentlyHoveredElement : currentlyHoveredElement,
+								isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
+								isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere
+							});
+						}
+						// Reset the status currentlyDraggedElement if we were dragging from one instance to another
+						if (isCurrentlyDraggedElementFromElsewhere) {
+							isCurrentlyDraggedElementFromElsewhere = false;
+							currentlyDraggedElement = null;
+						}
 					}
 				});
+				// dragenter on a new element is always fired *before* the dragover on that element
 				// dragenter on the next element is fired *before* the dragleave of the previous element
 				$(this).on("dragenter"+randomEventNamespace, function(event) {
+					currentlyHoveredElement = window.currentlyHoveredElement = $(event.target);
 					// .PreventDefault() is a means of saying that we accept the draggable
 					event.preventDefault();
 					event.stopPropagation();
-					currentlyHoveredElement = $(event.target);
+					// Get currentlyDraggedElement from window if we are dragging from one instance to another
+					if (!currentlyDraggedElement && options.acceptDraggablesFromElsewhere && window.html5dragdrop.currentlyDraggedElement) {
+						currentlyDraggedElement =  window.html5dragdrop.currentlyDraggedElement; // event.originalEvent.dataTransfer.getData("jquery-html5dragdrop");
+						isCurrentlyDraggedElementFromElsewhere = true;
+					}
 					// Check if we really entered a new hoveredDroppable. If so, fire an event and set new hoveredDroppable
 					if (!currentlyHoveredElement.closest(droppables).is(currentlyHoveredDroppable)) {
-						currentlyHoveredDroppable = $(event.originalEvent.currentTarget);
+						currentlyHoveredDroppable = window.html5dragdrop.currentlyHoveredDroppable = $(this);
 						options.onEnterDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
 							mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
-							currentlyHoveredElement : currentlyHoveredElement
+							currentlyHoveredElement : currentlyHoveredElement,
+							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
+							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere
 						});
+					}
+					// Reset the status currentlyDraggedElement if we were dragging from one instance to another
+					if (isCurrentlyDraggedElementFromElsewhere) {
+						isCurrentlyDraggedElementFromElsewhere = false;
+						currentlyDraggedElement = null;
 					}
 				});
 				$(this).on("dragleave"+randomEventNamespace, function(event) {
 					event.preventDefault();
 					event.stopPropagation();
+					// Get currentlyDraggedElement from window if we are dragging from one instance to another
+					if (!currentlyDraggedElement && options.acceptDraggablesFromElsewhere && window.html5dragdrop.currentlyDraggedElement) {
+						currentlyDraggedElement =  window.html5dragdrop.currentlyDraggedElement; // event.originalEvent.dataTransfer.getData("jquery-html5dragdrop");
+						isCurrentlyDraggedElementFromElsewhere = true;
+					}
 					// Check if we really left the hoveredDroppable. If so, fire an event
 					// currentlyHoveredElement cannot be set here, since event.target does NOT contain the currently Hovered Element
 					if (!$(currentlyHoveredElement).closest(options.droppables).is($(this))) {
 						options.onLeaveDroppable(currentlyDraggedElement, $(this), { 
 							mouseLocation: getMouseLocation(event, currentlyDraggedElement, $(this), currentlyHoveredElement),
-							currentlyHoveredElement : currentlyHoveredElement
+							currentlyHoveredElement : currentlyHoveredElement,
+							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
+							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere
 						});
+					}
+					// Reset the status currentlyDraggedElement if we were dragging from one instance to another
+					if (isCurrentlyDraggedElementFromElsewhere) {
+						isCurrentlyDraggedElementFromElsewhere = false;
+						currentlyDraggedElement = null;
 					}
 				});
 				$(this).on("drop"+randomEventNamespace, function(event) {
 					event.preventDefault();
 					event.stopPropagation();
 					elementWasDroppedSuccessfully = true;
-					currentlyHoveredDroppable = $(event.originalEvent.currentTarget);
-					currentlyHoveredElement = $(event.target);
+					currentlyHoveredDroppable = window.currentlyHoveredDroppable = $(event.originalEvent.currentTarget);
+					currentlyHoveredElement = window.currentlyHoveredElement = $(event.target);
 					// Actual onDrop event will be thrown at dragEnd
 				});
 			});
@@ -242,8 +306,8 @@ $.fn.html5dragdrop = function(options) {
 				unRegisterDroppables();
 				draggables = root.find(options.draggables);
 				droppables = root.find(options.droppables);
-				initDraggables();
-				initDroppables();
+				initDraggables(draggables);
+				initDroppables(droppables);
 			},
 			getRoot : function() {
 				return root;

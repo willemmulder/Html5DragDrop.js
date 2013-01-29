@@ -32,11 +32,13 @@
 				background: #161819;
 			}
 
+			ul.list_left, ul.list_right { width: 50%; float: left; }
+
 			button { 
 				color: #fff; 
 				padding: 10px;
 				margin: 20px;
-				background: #44b; 
+				background: #44b;
 			}
 
 			*[draggable] { cursor: move; }
@@ -79,7 +81,7 @@
 						// Place after element
 						target.after(elementToPlace);
 					}
-					list.update();
+					//list.update();
 				}
 
 
@@ -115,6 +117,15 @@
 					}
 				});
 				function placeAtTarget(elementToPlace, target, details, dropped) {
+					if (target.is(elementToPlace)) {
+						if (dropped && 
+							details.mouseLocation.inCurrentElement.y >= target.outerHeight(true) * 1/4 &&
+							details.mouseLocation.inCurrentElement.y <= target.outerHeight(true) * 3/4
+						) {
+							elementToPlace.closest("ul.temporary").removeClass("temporary");
+						}
+						return;
+					}
 					if (details.mouseLocation.inCurrentElement.y < target.outerHeight(true) * 1/4) {
 						// Place before element
 						target.before(elementToPlace);
@@ -131,8 +142,47 @@
 						target.append(c);
 						c.append(elementToPlace);
 					}
+					// We *need* to do an update on the tree (rebinding the events),
+					// because when an "append" is done like above, new HTML is inserted into the DOM
+					// On that HTML, no bindings are yet set
 					treeView.update();
 				}
+
+				// Two lists
+				var list = $(".container .list_left, .container .list_right").html5dragdrop({
+					draggables : "li",
+					droppables : "li",
+					acceptDraggablesFromElsewhere : true, // Accept from elsewhere
+					onDragStart : function(draggedElement, details) {
+						draggedElement.animate({
+							opacity: 0.2
+						});
+					},
+					onDragCancelled : function(draggedElement, details) {
+						draggedElement.animate({
+							opacity: 1
+						});
+					},
+					onDrop : function(draggedElement, destinationDroppable, details) {
+						draggedElement.animate({
+							opacity: 1
+						});
+						placeAtDoubleList(draggedElement, details.currentlyHoveredElement, details);
+					},
+					onHoverDroppable : function(draggedElement,  hoveredDroppable, details) {
+						placeAtDoubleList(draggedElement, details.currentlyHoveredElement, details);
+					}
+				});
+				function placeAtDoubleList(elementToPlace, target, details) {
+					if (details.mouseLocation.inCurrentElement.y < target.outerHeight(true) / 2) {
+						// Place before element
+						target.before(elementToPlace);
+					} else {
+						// Place after element
+						target.after(elementToPlace);
+					}
+				}
+
 
 			});
 		</script>
@@ -157,6 +207,19 @@
 				</li>
 			</ul>
 			<button onclick='$(".tree").append("<li>added</li>"); $(".container .tree").html5dragdrop().update();'>Add tree element</button>
+			<p>Or two lists that can receive items from each other</p>
+			<ul class='list_left'>
+				<li>left item 1</li>
+				<li>left item 2</li>
+				<li>left item 3</li>
+				<li>left item 4</li>
+			</ul>
+			<ul class='list_right'>
+				<li>right item 1</li>
+				<li>right item 2</li>
+				<li>right item 3</li>
+				<li>right item 4</li>
+			</ul>
 		</div>
 		<script>
 			// Analytics
