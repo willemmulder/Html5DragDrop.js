@@ -139,7 +139,7 @@ $.fn.html5dragdrop = function(options) {
 							mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
 							currentlyHoveredElement : currentlyHoveredElement,
 							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
-							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere
+							isCurrentlyDraggedElementFromElsewhere : isCurrentlyDraggedElementFromElsewhere
 						});
 					}	
 					// Trigger a cancel or a drop, based on whether the elementWasDroppedSuccessfully
@@ -148,19 +148,19 @@ $.fn.html5dragdrop = function(options) {
 							mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
 							currentlyHoveredElement : currentlyHoveredElement,
 							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
-							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere
+							isCurrentlyDraggedElementFromElsewhere : isCurrentlyDraggedElementFromElsewhere
 						});
 					} else {
 						options.onDragCancelled(currentlyDraggedElement, { 
 							mouseLocation: getMouseLocation(event, currentlyDraggedElement, null),
 							currentlyHoveredElement : currentlyHoveredElement,
 							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
-							isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere
+							isCurrentlyDraggedElementFromElsewhere : isCurrentlyDraggedElementFromElsewhere
 						});
 					}
 					// Reset global variables
-					window.html5dragdrop.currentlyHoveredInstance = null;
-					window.html5dragdrop.currentlyDraggedFromInstance = null;
+					window.html5dragdrop.currentlyHoveredDroppable = null;
+					window.html5dragdrop.currentlyHoveredElement = null;
 					window.html5dragdrop.currentlyDraggedElement = null;
 					// Reset 'local' variables
 					currentlyDraggedElement = null;
@@ -193,7 +193,7 @@ $.fn.html5dragdrop = function(options) {
 								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
 								currentlyHoveredElement : currentlyHoveredElement,
 								isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
-								isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere
+								isCurrentlyDraggedElementFromElsewhere : isCurrentlyDraggedElementFromElsewhere
 							});
 						}
 						// Reset the status currentlyDraggedElement if we were dragging from one instance to another
@@ -209,9 +209,9 @@ $.fn.html5dragdrop = function(options) {
 									mouseLocation: getMouseLocation(event, null, currentlyHoveredDroppable, currentlyHoveredElement),
 									currentlyHoveredElement : currentlyHoveredElement,
 									isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
-									isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
+									isCurrentlyDraggedElementFromElsewhere : isCurrentlyDraggedElementFromElsewhere,
 									isFile : (!!event.originalEvent.dataTransfer.files.length),
-									data : (event.originalEvent.dataTransfer.getData(""))
+									data : (event.originalEvent.dataTransfer.getData("text/html"))
 								});
 							}
 						}
@@ -236,7 +236,7 @@ $.fn.html5dragdrop = function(options) {
 							options.onEnterDroppable(currentlyDraggedElement, currentlyHoveredDroppable, { 
 								mouseLocation: getMouseLocation(event, currentlyDraggedElement, currentlyHoveredDroppable, currentlyHoveredElement),
 								currentlyHoveredElement : currentlyHoveredElement,
-								isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
+								isCurrentlyDraggedElementFromElsewhere : isCurrentlyDraggedElementFromElsewhere,
 								isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere
 							});
 						}
@@ -248,14 +248,18 @@ $.fn.html5dragdrop = function(options) {
 					} else {
 						// Element is dragged from a non-html5dragdrop instance
 						if (options.acceptDraggablesFromNonInstances && !window.html5dragdrop.currentlyDraggedElement) {
-							options.onEnterDroppable(null, currentlyHoveredDroppable, { 
-								mouseLocation: getMouseLocation(event, null, currentlyHoveredDroppable, currentlyHoveredElement),
-								currentlyHoveredElement : currentlyHoveredElement,
-								isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
-								isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
-								isFile : (!!event.originalEvent.dataTransfer.files.length),
-								data : (event.originalEvent.dataTransfer.getData(""))
-							});
+							// Check if we really entered a new hoveredDroppable. If so, fire an event and set new hoveredDroppable
+							if (!currentlyHoveredElement.closest(droppables).is(currentlyHoveredDroppable)) {
+								currentlyHoveredDroppable = window.html5dragdrop.currentlyHoveredDroppable = $(this);
+								options.onEnterDroppable(null, currentlyHoveredDroppable, { 
+									mouseLocation: getMouseLocation(event, null, currentlyHoveredDroppable, currentlyHoveredElement),
+									currentlyHoveredElement : currentlyHoveredElement,
+									isCurrentlyDraggedElementFromElsewhere : isCurrentlyDraggedElementFromElsewhere,
+									isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
+									isFile : (!!event.originalEvent.dataTransfer.files.length),
+									data : (event.originalEvent.dataTransfer.getData("text/html"))
+								});
+							}
 						}
 					}
 				});
@@ -275,7 +279,7 @@ $.fn.html5dragdrop = function(options) {
 								mouseLocation: getMouseLocation(event, currentlyDraggedElement, $(this), currentlyHoveredElement),
 								currentlyHoveredElement : currentlyHoveredElement,
 								isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
-								isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere
+								isCurrentlyDraggedElementFromElsewhere : isCurrentlyDraggedElementFromElsewhere
 							});
 						}
 						// Reset the status currentlyDraggedElement if we were dragging from one instance to another
@@ -290,7 +294,7 @@ $.fn.html5dragdrop = function(options) {
 								mouseLocation: getMouseLocation(event, null, $(this), currentlyHoveredElement),
 								currentlyHoveredElement : currentlyHoveredElement,
 								isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
-								isCurrentlyDraggedElementDroppedElsewhere : isCurrentlyDraggedElementDroppedElsewhere,
+								isCurrentlyDraggedElementFromElsewhere : isCurrentlyDraggedElementFromElsewhere,
 								isFile : (!!event.originalEvent.dataTransfer.files.length),
 								data : (event.originalEvent.dataTransfer.getData(""))
 							});
@@ -301,9 +305,41 @@ $.fn.html5dragdrop = function(options) {
 					event.preventDefault();
 					event.stopPropagation();
 					elementWasDroppedSuccessfully = true;
-					currentlyHoveredDroppable = window.currentlyHoveredDroppable = $(event.originalEvent.currentTarget);
+					currentlyHoveredDroppable = window.currentlyHoveredDroppable = $(this);
 					currentlyHoveredElement = window.currentlyHoveredElement = $(event.target);
 					// Actual onDrop event will be thrown at dragEnd
+					// Only if the dragging is not taking place within this instance, we deal with it here, since no dragEnd will be fired
+					if (!currentlyDraggedElement) {
+						// Trigger a 'leave' on the currentlyHoveredElement and currentlyHoveredDroppable
+						options.onLeaveDroppable(null, currentlyHoveredDroppable, { 
+							mouseLocation: getMouseLocation(event, null, currentlyHoveredDroppable, currentlyHoveredElement),
+							currentlyHoveredElement : currentlyHoveredElement,
+							isCurrentlyDraggedElementDroppedElsewhere : false,
+							isCurrentlyDraggedElementFromElsewhere : true,
+							isFile : (!!event.originalEvent.dataTransfer.files.length),
+							data : (event.originalEvent.dataTransfer.getData("text/html"))
+						});
+						// Trigger onDrop
+						options.onDrop(null, currentlyHoveredDroppable, { 
+							mouseLocation: getMouseLocation(event, null, currentlyHoveredDroppable, currentlyHoveredElement),
+							currentlyHoveredElement : currentlyHoveredElement,
+							isCurrentlyDraggedElementDroppedElsewhere : false,
+							isCurrentlyDraggedElementFromElsewhere : true,
+							isFile : (!!event.originalEvent.dataTransfer.files.length),
+							data : (event.originalEvent.dataTransfer.getData("text/html"))
+						});
+						// Reset global variables
+						window.html5dragdrop.currentlyHoveredDroppable = null;
+						window.html5dragdrop.currentlyHoveredElement = null;
+						window.html5dragdrop.currentlyDraggedElement = null;
+						// Reset 'local' variables
+						currentlyDraggedElement = null;
+						isCurrentlyDraggedElementFromElsewhere = false;
+						currentlyHoveredDroppable = null;
+						currentlyHoveredElement = null;
+						isCurrentlyDraggedElementDroppedElsewhere = false;
+						elementWasDroppedSuccessfully = false;
+					}	
 				});
 			});
 		}
