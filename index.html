@@ -13,7 +13,7 @@
 			}
 
 			h1 { font-size: 40px; padding: 30px; color: #44b; margin: 0px; }
-			p { background: #44b; padding: 30px; margin: 0px; color: #fff; }
+			p { clear: both; background: #44b; padding: 30px; margin: 0px; color: #fff; }
 
 			.depth { position: relative; }
 			.depth:before, .depth:after {
@@ -95,7 +95,7 @@
 						});
 					},
 					onDragCancelled : function(draggedElement, details) {
-						$(".container").find(".temporary").remove();
+						$(".container").find(".temporary .tree").remove();
 						draggedElement.animate({
 							opacity: 1
 						});
@@ -105,14 +105,14 @@
 							opacity: 1
 						});
 						placeAtTarget(draggedElement, destinationDroppable, details, true);
-						$(".container").find(".temporary").remove();
+						$(".container .tree").find(".temporary").remove();
 					},
 					onHoverDroppable : function(draggedElement, hoveredDroppable, details) {
 						// Don't do anything if we are currently hovering the draggable
 						if (hoveredDroppable.is(draggedElement)) {
 							return;
 						}
-						$(".container").find(".temporary").remove();
+						$(".container .tree").find(".temporary").remove();
 						placeAtTarget(draggedElement, hoveredDroppable, details, false);
 					}
 				});
@@ -153,7 +153,6 @@
 					draggables : "li",
 					droppables : "li",
 					acceptDraggablesFromOtherInstances : true, // Accept from other jqueryhtml5dragdrop
-					acceptDraggablesFromElsewhere : true, // Accept from non-jqueryhtml5dragdrop instances
 					onDragStart : function(draggedElement, details) {
 						draggedElement.animate({
 							opacity: 0.2
@@ -175,6 +174,49 @@
 					}
 				});
 				function placeAtDoubleList(elementToPlace, target, details) {
+					if (details.mouseLocation.inCurrentElement.y < target.outerHeight(true) / 2) {
+						// Place before element
+						target.before(elementToPlace);
+					} else {
+						// Place after element
+						target.after(elementToPlace);
+					}
+				}
+
+				// Accept files from elsewhere
+				var list = $(".container .filelist").html5dragdrop({
+					draggables : "",
+					droppables : "li",
+					acceptDraggablesFromNonInstances : true, // Accept from non jqueryhtml5dragdrop instances
+					onDrop : function(draggedElement, destinationDroppable, details) {
+						draggedElement.animate({
+							opacity: 1
+						});
+						placeAtFileList(draggedElement, details.currentlyHoveredElement, details);
+					},
+					onHoverDroppable : function(draggedElement, hoveredDroppable, details) {
+						if (draggedElement != null) {
+							console.log("I only want draggables from non-instances!");
+						}
+						console.log(details);
+						placeAtFileList($("<li class='temporary'>").html("drop here"), details.currentlyHoveredElement, details);
+					},
+					onEnterDroppable : function(draggedElement, enteredDroppable, details) {
+						if (draggedElement != null) {
+							console.log("I only want draggables from non-instances!");
+						}
+						$(".container .files .temporary").remove();
+						console.log(details);
+					},
+					onLeaveDroppable : function(draggedElement, leftDroppable, details) {
+						if (draggedElement != null) {
+							console.log("I only want draggables from non-instances!");
+						}
+						$(".container .files .temporary").remove();
+						console.log(details);
+					}
+				});
+				function placeAtFileList(elementToPlace, target, details) {
 					if (details.mouseLocation.inCurrentElement.y < target.outerHeight(true) / 2) {
 						// Place before element
 						target.before(elementToPlace);
@@ -220,6 +262,13 @@
 				<li>right item 2</li>
 				<li>right item 3</li>
 				<li>right item 4</li>
+			</ul>
+			<p>It can also accept files from outside the browser</p>
+			<ul class='filelist'>
+				<li>file item 1</li>
+				<li>file item 2</li>
+				<li>file item 3</li>
+				<li>file item 4</li>
 			</ul>
 		</div>
 		<script>
