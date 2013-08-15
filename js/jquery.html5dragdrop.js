@@ -77,6 +77,7 @@ $.fn.html5dragdrop = function(options) {
 		var currentlyHoveredDroppable = null;
 		var isCurrentlyDraggedElementDroppedElsewhere = false;
 		var elementWasDroppedSuccessfully = false;
+		var mousePositionAtDragStart = {};
 
 		// --- Create event nameSpace
 		var randomEventNamespace = ".jQuery-html5DragDrop-" + new Date().getTime() + "-" + Math.random();
@@ -105,6 +106,7 @@ $.fn.html5dragdrop = function(options) {
 				$(this).on("dragstart"+randomEventNamespace, function(event) {
 					currentlyDraggedElement = window.html5dragdrop.currentlyDraggedElement = $(event.target);
 					currentlyHoveredElement = window.html5dragdrop.currentlyHoveredElement = $(event.target);
+					mousePositionAtDragStart = { x : event.originalEvent.pageX, y : event.originalEvent.pageY };
 					options.onDragStart(currentlyDraggedElement, {
 						mouseLocation: getMouseLocation(event, currentlyDraggedElement, null)
 					});
@@ -359,6 +361,7 @@ $.fn.html5dragdrop = function(options) {
 			mouseLocation.inDraggable = (draggable ? delta(mouseLocation.inDocument, draggable.offset()) : null);
 			mouseLocation.inDroppable = (droppable ? delta(mouseLocation.inDocument, droppable.offset()) : null);
 			mouseLocation.inCurrentElement = (currentElement ? delta(mouseLocation.inDocument, currentElement.offset()) : null);
+			mouseLocation.fromDragStart = { x : event.originalEvent.pageX - mousePositionAtDragStart.x, y : event.originalEvent.pageY - mousePositionAtDragStart.y };
 			return mouseLocation;
 		}
 
