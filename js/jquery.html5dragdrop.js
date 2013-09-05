@@ -112,7 +112,14 @@ $.fn.html5dragdrop = function(options) {
 					});
 					// Set the ghosting image
 					if (!options.ghosting) {
-						event.originalEvent.dataTransfer.setDragImage($("<div/>").get(0), 0, 0);
+						var emptyDiv = $("[dragImage="+randomEventNamespace+"]");
+						if (!emptyDiv.length) {
+							emptyDiv = $("<div>").
+									attr("dragImage", randomEventNamespace).
+									attr("style","position: absolute; display: block; top: -10px; left: -10px; width: 1px; height: 1px;");
+									$("body").append(emptyDiv);
+						}
+						event.originalEvent.dataTransfer.setDragImage(emptyDiv.get(0), 0, 0);
 					} else {
 						var ghosting = options.getGhostingContent(currentlyDraggedElement);
 						if (ghosting instanceof jQuery) {
