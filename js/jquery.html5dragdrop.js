@@ -112,7 +112,7 @@ $.fn.html5dragdrop = function(options) {
 					});
 					// Set the ghosting image
 					if (!options.ghosting) {
-						var emptyDiv = $("[dragImage="+randomEventNamespace+"]");
+						var emptyDiv = $("[dragImage='"+randomEventNamespace+"']");
 						if (!emptyDiv.length) {
 							emptyDiv = $("<div>").
 									attr("dragImage", randomEventNamespace).
