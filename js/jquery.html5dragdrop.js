@@ -104,8 +104,8 @@ $.fn.html5dragdrop = function(options) {
 			draggablesToInit.each(function() {
 				this.draggable = true;
 				$(this).on("dragstart"+randomEventNamespace, function(event) {
-					currentlyDraggedElement = window.html5dragdrop.currentlyDraggedElement = $(event.target);
-					currentlyHoveredElement = window.html5dragdrop.currentlyHoveredElement = $(event.target);
+					currentlyDraggedElement = window.html5dragdrop.currentlyDraggedElement = $(event.currentTarget);
+					currentlyHoveredElement = window.html5dragdrop.currentlyHoveredElement = $(event.currentTarget);
 					mousePositionAtDragStart = { x : event.originalEvent.pageX, y : event.originalEvent.pageY };
 					options.onDragStart(currentlyDraggedElement, {
 						mouseLocation: getMouseLocation(event, currentlyDraggedElement, null)
@@ -235,7 +235,7 @@ $.fn.html5dragdrop = function(options) {
 				// dragenter on a new element is always fired *before* the dragover on that element
 				// dragenter on the next element is fired *before* the dragleave of the previous element
 				$(this).on("dragenter"+randomEventNamespace, function(event) {
-					currentlyHoveredElement = window.currentlyHoveredElement = $(event.target);
+					currentlyHoveredElement = window.currentlyHoveredElement = $(event.currentTarget);
 					// .PreventDefault() is a means of saying that we accept the draggable
 					event.preventDefault();
 					event.stopPropagation();
@@ -288,7 +288,7 @@ $.fn.html5dragdrop = function(options) {
 							isCurrentlyDraggedElementFromElsewhere = true;
 						}
 						// Check if we really left the hoveredDroppable. If so, fire an event
-						// currentlyHoveredElement cannot be set here, since event.target does NOT contain the currently Hovered Element
+						// currentlyHoveredElement cannot be set here, since event.currentTarget does NOT contain the currently Hovered Element
 						if (!$(currentlyHoveredElement).closest(options.droppables).is($(this))) {
 							options.onLeaveDroppable(currentlyDraggedElement, $(this), {
 								mouseLocation: getMouseLocation(event, currentlyDraggedElement, $(this), currentlyHoveredElement),
@@ -321,7 +321,7 @@ $.fn.html5dragdrop = function(options) {
 					event.stopPropagation();
 					elementWasDroppedSuccessfully = true;
 					currentlyHoveredDroppable = window.currentlyHoveredDroppable = $(this);
-					currentlyHoveredElement = window.currentlyHoveredElement = $(event.target);
+					currentlyHoveredElement = window.currentlyHoveredElement = $(event.currentTarget);
 					// Actual onDrop event will be thrown at dragEnd
 					// Only if the dragging is not taking place within this instance, we deal with it here, since no dragEnd will be fired
 					if (!currentlyDraggedElement && options.acceptDraggablesFromNonInstances && !window.html5dragdrop.currentlyDraggedElement) {
